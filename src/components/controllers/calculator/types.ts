@@ -4,7 +4,7 @@ export interface IDigit {
 }
 
 export function isDigit(object: any): object is IDigit {
-    return ('type' in object) && (object.type === 'digit')
+    return (object) && ('type' in object) && (object.type === 'digit')
 }
 
 export interface IOperator {
@@ -17,7 +17,7 @@ export interface IOperator {
 }
 
 export function isOperator(object: any): object is IOperator {
-    return ('type' in object) && (object.type === 'operator')
+    return (object) && ('type' in object) && (object.type === 'operator')
 }
 
 export interface IUnaryOperator {
@@ -29,13 +29,6 @@ export interface IUnaryOperator {
 }
 
 export function isUnaryOperator(object: any): object is IUnaryOperator {
-    return ('type' in object) && (object.type === 'unaryOperator')
+    return (object) && ('type' in object) && (object.type === 'unaryOperator')
 }
 
-export interface IExpression {
-    first: string | IExpression
-    operator?: IOperator | IUnaryOperator
-    second?: string | IExpression
-    appendDigit: (digit: IDigit) => void  // Append digit to first/second operand
-    resolve: () => number
-}

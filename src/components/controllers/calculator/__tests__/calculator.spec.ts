@@ -42,8 +42,115 @@ describe('Calculator', function () {
     })
     it("preinserts 0", function () {
         calculator.pushToken(",");
-        expect(calculator.stack[0].value).toBe("0");
-        expect(calculator.stack[1].value).toBe(",");
+        expect(calculator.stringify()).toBe("0,");
+        calculator.clearAll();
+        calculator.pushToken('add');
+        expect(calculator.stringify()).toBe("0+");
     });
+    it("correctly appends and stringifies expressions", function () {
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("2");
+        calculator.pushToken("sqrt");
+        calculator.pushToken("add");
+        calculator.pushToken("3");
+        expect(calculator.parsedStack?.toString()).toBe("1+√(2)+3");
+    })
+    it("strips dangling decimals", function () {
+        calculator.pushToken("1");
+        calculator.pushToken(",");
+        calculator.pushToken("add");
+        calculator.pushToken("2");
+        calculator.pushToken(",");
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken(",");
+        expect(calculator.stringify()).toBe("1+2,1+0,");
+    })
+    it("calculates simple expressions", function () {
+        // 5 + 5 - 4 = 6
+        calculator.pushToken("5");
+        calculator.pushToken("add");
+        calculator.pushToken("5");
+        calculator.pushToken("sub");
+        calculator.pushToken("4");
+        expect(calculator.calculate()).toBe(6);
+    })
+    it("stringifies simple expressions", function () {
+        // 5 + 5 - 4 = 6
+        calculator.pushToken("5");
+        calculator.pushToken("add");
+        calculator.pushToken("5");
+        calculator.pushToken("sub");
+        calculator.pushToken("4");
+        expect(calculator.stringify()).toBe("5+5-4");
+    })
+    it("calculates expressions with 2 tiers of priority", function () {
+        // 1 + 5 * 4 - 4 / 2 = 19
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("5");
+        calculator.pushToken("mul");
+        calculator.pushToken("4");
+        calculator.pushToken("sub");
+        calculator.pushToken("4");
+        calculator.pushToken("div");
+        calculator.pushToken("2");
+        expect(calculator.calculate()).toBe(19);
+    })
+    it("stringifies expressions with 2 tiers of priority", function () {
+        // 1 + 5 * 4 - 4 / 2 = 19
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("5");
+        calculator.pushToken("mul");
+        calculator.pushToken("4");
+        calculator.pushToken("sub");
+        calculator.pushToken("4");
+        calculator.pushToken("div");
+        calculator.pushToken("2");
+        expect(calculator.stringify()).toBe("1+5×4-4/2");
+    })
+    it("calculates expressions with 3 tiers of priority", function () {
+        // 1 + sqrt(25) * 4 - 4 / 2 = 19
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("2");
+        calculator.pushToken("5");
+        calculator.pushToken("sqrt");
+        calculator.pushToken("mul");
+        calculator.pushToken("4");
+        calculator.pushToken("sub");
+        calculator.pushToken("4");
+        calculator.pushToken("div");
+        calculator.pushToken("2");
+        expect(calculator.calculate()).toBe(20);
+    })
+    it("stringifies expressions with 3 tiers of priority", function () {
+        // 1 + sqrt(25) * 4 - 4 / 2 = 19
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("2");
+        calculator.pushToken("5");
+        calculator.pushToken("sqrt");
+        calculator.pushToken("mul");
+        calculator.pushToken("4");
+        calculator.pushToken("sub");
+        calculator.pushToken("4");
+        calculator.pushToken("div");
+        calculator.pushToken("2");
+        expect(calculator.stringify()).toBe("1+1+√(25)×4-4/2");
+    })
+    it("replaces dangling operators", function () {
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("sub");
+        expect(calculator.stringify()).toBe("1-");
+    })
+    
 
 });

@@ -1,32 +1,71 @@
 import type { IOperator } from "./types";
 
-export default [
-    {
-        value: "add",
-        priority: 0,
-        apply: (a, b) => {
+class Operator implements IOperator {
+    value: string;
+    type: 'operator';
+    priority: number;
+    apply: (a: number, b: number) => number;
+    appendToString: (a: string, b?: string) => string;
+    constructor(
+        value: string, 
+        priority: number, 
+        apply: (a: number, b: number) => number, 
+        appendToString: (a: string, b?: string) => string) {
+        this.value = value;
+        this.type = 'operator';
+        this.priority = priority;
+        this.apply = apply;
+        this.appendToString = appendToString;
+    }
+}
+const operators = [
+    new Operator(
+        "add", 0,
+        (a, b) => {
             return a + b
+        },
+        (a, b) => {
+            return b ? 
+            a + "+" + b :
+            a + "+"
         }
-    },
-    {
-        value: "sub",
-        priority: 0,
-        apply: (a, b) => {
+    ),
+    new Operator(
+        "sub",
+        0,
+        (a, b) => {
             return a - b
+        },
+        (a, b) => {
+            return b ? 
+            a + "-" + b :
+            a + "-"
         }
-    },
-    {
-        value: "mul",
-        priority: 1,
-        apply: (a, b) => {
+    ),
+    new Operator(
+        "mul",
+        1,
+        (a, b) => {
             return a * b
+        },
+        (a, b) => {
+            return b ? 
+            a + "×" + b :
+            a + "×"
         }
-    },
-    {
-        value: "div",
-        priority: 1,
-        apply: (a, b) => {
+    ),
+    new Operator(
+        "div",
+        1,
+        (a, b) => {
             return a / b
+        },
+        (a, b) => {
+            return b ? 
+            a + "/" + b :
+            a + "/"
         }
-    },
+    ),
 ] as IOperator[];
+
+export default operators;

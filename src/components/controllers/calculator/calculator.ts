@@ -1,58 +1,33 @@
-import { isDigit, isOperator, isUnaryOperator, type IDigit, type IExpression, type IOperator, type IUnaryOperator } from "./types";
+import { isDigit, isOperator, isUnaryOperator, type IDigit, type IOperator, type IUnaryOperator } from "./types";
 import digits from "./digits";
 import operators from "./operators";
 import unaryOperators from "./unaryOperators";
 
-class Digit implements IDigit {
-    value: string;
-    type: 'digit';
-    constructor(value: string) {
-        this.value = value
-        this.type = 'digit';
-    }
-}
 
-class Operator implements IOperator {
-    value: string;
-    type: 'operator';
-    priority: number;
-    apply: (a: number, b: number) => number;
-    appendToString: (a: string, b?: string) => string;
-    constructor(operator: IOperator) {
-        this.value = operator.value;
-        this.type = 'operator';
-        this.priority = operator.priority;
-        this.apply = operator.apply;
-        this.appendToString = operator.appendToString;
-    }
-}
+class Expression  {
+    first: string | Expression;
+    second?: string | Expression;
+    _operator?: IOperator | IUnaryOperator;
 
-class UnaryOperator implements IUnaryOperator {
-    value: string;
-    type: 'unaryOperator';
-    priority: number;
-    apply: (operand: number) => number;
-    appendToString: (operand: string) => string;
-    constructor(operator: IUnaryOperator) {
-        this.value = operator.value;
-        this.type = 'unaryOperator';
-        this.priority = operator.priority;
-        this.apply = operator.apply;
-        this.appendToString = operator.appendToString;
+    set operator(operator: IOperator | IUnaryOperator | undefined) {
+        this._dropDanglingDecimal();
+        this._operator = operator;
     }
-}
 
-class Expression implements IExpression {
-    first: string | IExpression;
-    second?: string | IExpression;
-    operator?: IOperator | IUnaryOperator;
-    constructor(first: string | IExpression, operator?: IOperator | IUnaryOperator, 
-                second?: string | IExpression) {
+    get operator(): IOperator | IUnaryOperator | undefined {
+        return this._operator
+    }
+
+    constructor(first: string | Expression, operator?: IOperator | IUnaryOperator, 
+                second?: string | Expression) {
         // Preappend 0 if there is no number before ","
         this.first = first === "," ? 
                      "0" + first : 
                      first;
-        this.operator = operator;
+        if (operator) {
+            // explicit if to avoid triggering premature decimal dropping
+            this.operator = operator;
+        }
         this.second = second;
     }
 
@@ -70,11 +45,29 @@ class Expression implements IExpression {
         }
     }
 
+    
+    
+    _dropDanglingDecimal() {
+        // Traverse the expression and remove any decimals without following digits
+        if (typeof this.first === 'string') {
+            if (this.first.endsWith(",")) {
+                this.first = this.first.replace(",","");
+            }
+        } else this.first._dropDanglingDecimal();
+        if (typeof this.second === 'string') {
+            if (this.second.endsWith(",")) {
+                this.second = this.second.replace(",","");
+            }
+        } else if (this.second) {
+            this.second._dropDanglingDecimal();
+        }
+    }
+
     resolve() {
         /*
         If insufficient operands, treat expression as its first member
         */
-        const toFloat = (expression: string | IExpression) => {
+        const toFloat = (expression: string | Expression): number => {
             if (typeof expression === 'string') {
                 // assuming passed string uses "," for decimals
                 return parseFloat(expression.replace(",", "."));
@@ -89,7 +82,7 @@ class Expression implements IExpression {
         } else return toFloat(this.first);
     }
 
-    toString() {
+    toString(): string {
         if (isOperator(this.operator) && this.second) {
             return this.operator.appendToString(this.first.toString(), this.second.toString())
         } else if (isOperator(this.operator)) {
@@ -106,8 +99,8 @@ class Expression implements IExpression {
 export default class Calculator {
     
     stack: (IDigit | IOperator | IUnaryOperator)[]
-    parsedStack: null | IExpression  // Token stack reduced to expressions with 1-2 operands
-    currentExpression: null | IExpression  // Expression to append next operator/operand to
+    parsedStack: null | Expression  // Token stack reduced to expressions with 1-2 operands
+    currentExpression: null | Expression  // Expression to append next operator/operand to
     constructor() {
         this.stack = [];
         this.parsedStack = null;
@@ -167,10 +160,11 @@ export default class Calculator {
             // Initialise expression if missing
             if (!this.currentExpression && !this.parsedStack) {
                 if (isDigit(token)) {
-                    this.parsedStack = new Expression(token.value);
-                    this.currentExpression = this.parsedStack;
+                    this.currentExpression = new Expression(token.value);
+                    this.parsedStack = this.currentExpression;
                 } else {
-                    throw Error("First token failed to return a digit");
+                    this.currentExpression = new Expression("0", token);
+                    this.parsedStack = this.currentExpression;
                 }
             } else if (!this.currentExpression) {
                 throw Error("Missing reference to current expression");
@@ -185,23 +179,22 @@ export default class Calculator {
                     throw Error("Current expression has two operands but no operator")
                 } else if (token.priority > this.currentExpression.operator.priority) {
                     // Higher priority (such as multiplication after addition)
-                    this.currentExpression.second = new Expression(
+                    const expr = new Expression(
                         this.currentExpression.second,
                         token
                     );
-                    if (!isUnaryOperator(token)) {
-                        this.currentExpression = this.currentExpression.second;
-                    }
+                    this.parsedStack!.second = expr;
+                    this.currentExpression = isUnaryOperator(token) ? this.parsedStack : expr;
                 } else {
                     // Bundle previous expression as an operand in the new one
                     this.currentExpression = new Expression(
-                        this.currentExpression,
+                        this.parsedStack!,
                         token
                     );
+                    this.parsedStack = this.currentExpression;
                 }
             }
         }
-
         this.stack = [];
     }
 }

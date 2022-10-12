@@ -235,9 +235,7 @@ export default class Calculator {
                             if (typeof expr.second === "string") {
                                 expr.second = new Expression(expr.second, token);
                             } else if (!expr.second) {
-                                expr.first = new Expression(
-                                    new Expression(expr.first, expr.operator)
-                                );
+                                expr.first = new Expression(expr.first, token);
                             } else {
                                 applyUnary(expr.second, token);
                             }
@@ -247,9 +245,7 @@ export default class Calculator {
                             this.currentExpression.operator = undefined;
                         }
                         if (!this.currentExpression.second) {
-                            this.currentExpression.first = new Expression(
-                                new Expression(this.currentExpression.first, token)
-                            );
+                            applyUnary(this.currentExpression, token)
                         } else {
                             applyUnary(this.currentExpression, token)
                         }
@@ -279,7 +275,6 @@ export default class Calculator {
                 }
             }
         }
-        console.log(this.parsedStack?.toString())
         this.stack = [];
     }
 
@@ -291,14 +286,21 @@ export default class Calculator {
         Current expression's first operand if no operator.
         Else second operand's rightmost operand
         */
-        if (!this.done && this.currentExpression) {
-            if (!this.currentExpression.operator) {
-                return this.currentExpression.first.toString()
-            } else if (this.currentExpression.second) {
-                return this.currentExpression.second.toString()
+        const getRightmostOperand = (expr: string | Expression): string => {
+            if (typeof expr === "string") {
+                return expr;
+            } else if (isUnaryOperator(expr.operator)) {
+                return expr.toString()
+            } else if (!expr.operator || !expr.second) {
+                return getRightmostOperand(expr.first)
+            } else if (typeof expr.second === 'string') {
+                return expr.second
             } else {
-                return "0"
+                return getRightmostOperand(expr.second)
             }
+        }
+        if (!this.done && this.currentExpression) {
+            return getRightmostOperand(this.currentExpression)
         } else {
             // To match calculator using commas for decimals.
             return this.calculate().toString().replace(".", ",")

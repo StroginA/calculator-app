@@ -191,7 +191,7 @@ describe('Calculator', function () {
         calculator.pushToken("1");
         expect(calculator.getCurrentResult()).toBe("1");
         calculator.pushToken("add");
-        expect(calculator.getCurrentResult()).toBe("0");
+        expect(calculator.getCurrentResult()).toBe("1");
         calculator.pushToken("1");
         calculator.pushToken(",");
         calculator.pushToken("5");

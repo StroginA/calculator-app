@@ -145,6 +145,17 @@ describe('Calculator', function () {
         calculator.pushToken("2");
         expect(calculator.stringify()).toBe("1+1+√(25)×4-4/2");
     })
+    it("calculates and stringifies nested unaries correctly", function () {
+        calculator.pushToken("6");
+        calculator.pushToken("5");
+        calculator.pushToken("6");
+        calculator.pushToken("1");
+        calculator.pushToken("sqrt");
+        calculator.pushToken("sqrt");
+        calculator.pushToken("sqrt");
+        expect(calculator.stringify()).toBe("√(√(√(6561)))");
+        expect(calculator.calculate()).toBe(3);
+    })
     it("replaces dangling operators", function () {
         calculator.pushToken("1");
         calculator.pushToken("add");

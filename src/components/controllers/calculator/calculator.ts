@@ -21,9 +21,7 @@ class Expression  {
     constructor(first: string | Expression, operator?: IOperator | IUnaryOperator, 
                 second?: string | Expression) {
         // Preappend 0 if there is no number before ","
-        this.first = first === "," ? 
-                     "0" + first : 
-                     first;
+        this.first = this._preappendZero(undefined, first)
         if (operator) {
             // explicit 'if' to avoid triggering premature decimal dropping
             this.operator = operator;
@@ -31,17 +29,37 @@ class Expression  {
         this.second = second;
     }
 
+    _preappendZero(oldString: string | undefined, addition: string | Expression): string | Expression {
+        // Call when appending decimal
+        return (
+            !oldString && addition === "," ? 
+            "0" + addition :
+            !oldString ?
+            addition :
+            oldString + addition
+        )
+    }
+
     appendDigit(digit: IDigit) {
         if (isOperator(this.operator) && typeof this.second === 'string') {
-            this.second = this.second + digit.value;
+            // do not add a second decimal
+            this.second = digit.value === "," && this.second.includes(",") ?
+                          this.second :
+                          this.second + digit.value;
         } else if (isOperator(this.operator)) {
             // If there is an Expression second operand (such as square root of a number), replace it
             // Preappend 0 if there is no number before ","
-            this.second = digit.value === "," ? 
-                          "0" + digit.value : 
-                          digit.value;
+            this.second = this._preappendZero(undefined, digit.value);
         } else {
-            this.first = this.first + digit.value
+            // do not add a decimal if there is one or first member is expression
+            if (isUnaryOperator(this.operator)) {
+                this.operator = undefined;
+                this.first = this._preappendZero(undefined, digit.value)
+            } else {
+                this.first = digit.value === "," && (this.first instanceof Expression || this.first.includes(",")) ?
+                              this.first :
+                              this.first + digit.value;
+            }
         }
     }
 
@@ -152,6 +170,13 @@ export default class Calculator {
         if (this.parsedStack) {
             if (this.done) {
                 this.parsedStack._dropDanglingDecimal()
+                // strip dangling operator
+                if (this.currentExpression && 
+                    !isUnaryOperator(this.currentExpression.operator) && 
+                    !this.currentExpression.second
+                ) {
+                    this.currentExpression.operator = undefined
+                }
                 return this.parsedStack.toString() + "="
             } else {
                 return this.parsedStack.toString()
@@ -180,9 +205,9 @@ export default class Calculator {
                 Then make it the current one.
                 parsed(2+3), current(parsed) -> parsed(expr(2+3)+), current(parsed)
         */
-        for (let token of this.stack) {
+        for (const token of this.stack) {
             // Initialise expression if missing
-            if (!this.currentExpression && !this.parsedStack) {
+            if (!this.parsedStack) {
                 if (isDigit(token)) {
                     this.currentExpression = new Expression(token.value);
                     this.parsedStack = this.currentExpression;
@@ -196,29 +221,44 @@ export default class Calculator {
                 if (isDigit(token)) {
                     // Digit
                     this.currentExpression.appendDigit(token);
-                } else if (!this.currentExpression.second) {
-                    // Replace dangling operator
-                    this.currentExpression.operator = token;
-                } else if (!this.currentExpression.operator) {
-                    throw Error("Current expression has two operands but no operator")
-                } else if (token.priority > this.currentExpression.operator.priority) {
-                    // Higher priority (such as multiplication after addition)
-                    const expr = new Expression(
-                        this.currentExpression.second,
-                        token
-                    );
-                    this.parsedStack!.second = expr;
-                    this.currentExpression = isUnaryOperator(token) ? this.parsedStack : expr;
                 } else {
-                    // Bundle previous expression as an operand in the new one
-                    this.currentExpression = new Expression(
-                        this.parsedStack!,
-                        token
-                    );
-                    this.parsedStack = this.currentExpression;
+                    if (this.currentExpression.second && !this.currentExpression.operator) {
+                        throw Error("Current expression has two operands but no operator")
+                    }
+                    if (isUnaryOperator(token)) {
+                        // strip non-unary dangling operators
+                        if (!isUnaryOperator(this.currentExpression.operator) && !this.currentExpression.second) {
+                            this.currentExpression.operator = undefined;
+                        }
+                        this.currentExpression = new Expression(
+                            new Expression(this.currentExpression, token)
+                        )
+                        this.parsedStack = this.currentExpression;
+                    } else if (!this.currentExpression.operator) {
+                        this.currentExpression.operator = token;
+                    } else if (this.currentExpression.second && 
+                               token.priority > this.currentExpression.operator.priority) 
+                    {
+                        this.currentExpression = new Expression(
+                            this.currentExpression.second,
+                            token
+                        );
+                        this.parsedStack.second = this.currentExpression;
+                    } else if (this.currentExpression.second && 
+                        token.priority <= this.currentExpression.operator.priority
+                    ) {
+                        this.currentExpression = new Expression(
+                            this.parsedStack,
+                            token
+                        );
+                        this.parsedStack = this.currentExpression;
+                    } else {
+                        this.currentExpression.operator = token
+                    }
                 }
             }
         }
+        console.log(this.parsedStack?.toString())
         this.stack = [];
     }
 

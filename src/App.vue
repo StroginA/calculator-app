@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import Calculator from "./components/Calculator.vue";
+import CalculatorView from "./components/CalculatorView.vue";
 </script>
 
 <template>
   <div id="app" class="app">
     <div class="app__wrapper">
-      <Calculator class="app__calculator" />
+      <CalculatorView class="app__calculator" />
     </div>
   </div>
 </template>
@@ -31,6 +31,7 @@ import Calculator from "./components/Calculator.vue";
     margin: 2rem 1.5rem;
     border-radius: 1rem;
     height: fit-content;
+    max-width: 20rem;
   }
 
   @media screen and (max-width: 768px) {
@@ -40,7 +41,7 @@ import Calculator from "./components/Calculator.vue";
       width: 100%;
     }
     .app__calculator {
-      height: 100vh;
+      min-height: 100vh;
     }
   }
 </style>

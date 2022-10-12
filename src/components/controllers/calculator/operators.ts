@@ -78,6 +78,6 @@ const operators = [
             a + "%"
         }
     ),
-] as IOperator[];
+] as Operator[];
 
 export default operators;

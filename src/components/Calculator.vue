@@ -1,45 +1,56 @@
 <script setup lang="ts">
+import { computed, reactive, readonly, ref } from 'vue';
 import Calculator from './controllers/calculator/calculator';
 
-// Defines visual representation of buttons
+// Maps visual representation of buttons to tokens, as well as order of buttons
 const digitTokens = [
-    "7",
-    "8",
-    "9",
-    "4",
-    "5",
-    "6",
-    "1",
-    "2",
-    "3",
-    "00",
-    "0",
-    ",",
+    { ui: "7", token: "7" },
+    { ui: "8", token: "8" },
+    { ui: "9", token: "9" },
+    { ui: "4", token: "4" },
+    { ui: "5", token: "5" },
+    { ui: "6", token: "6" },
+    { ui: "1", token: "1" },
+    { ui: "2", token: "2" },
+    { ui: "3", token: "3" },
+    { ui: "00", token: "double-zero" },
+    { ui: "0", token: "0" },
+    { ui: ",", token: "," },
 ]
 const operatorTokens = [
-    "√",
-    "%",
-    "/",
-    "×",
-    "-",
-    "+"
+    { ui: "√", token: "sqrt" },
+    { ui: "%", token: "mod" },
+    { ui: "/", token: "div" },
+    { ui: "×", token: "mul" },
+    { ui: "-", token: "sub" },
+    { ui: "+", token: "add" },
 ]
 
-const calculator = new Calculator();
+const calculator = reactive(new Calculator());
 
 const handleClear = () => {
     calculator.clearAll();
 }
 
 const handlePushToken = (token: string) => {
-    calculator.pushToken(token);
+    // special cases go first
+    if (token === "double-zero") {
+        calculator.pushToken("0");
+        calculator.pushToken("0");
+    } else {
+        calculator.pushToken(token);
+    }
 }
+
+const expressionString = ref(calculator.stringify());
+const resultString = ref(calculator.getCurrentResult());
+
 </script>
 
 <template>
     <div class="calculator">
-        <div class="calculator__expression">20*45*80</div>
-        <div class="calculator__result">356</div>
+        <div class="calculator__expression">{{expressionString}}</div>
+        <div class="calculator__result">{{resultString}}</div>
         <div class="calculator__buttons">
             <!--
                 Buttons that do not modify the expression but instead
@@ -47,22 +58,23 @@ const handlePushToken = (token: string) => {
                 out of the for loop
             -->
             <button class="calculator__button" @click="handleClear">C</button>
-            <button class="calculator__button calculator__button_highlighted calculator__equals">=</button>
+            <button class="calculator__button calculator__button_highlighted calculator__equals"
+            @click="handlePushToken('return')">=</button>
             <div class="calculator__digits">
                 <button 
                 v-for="token in digitTokens" 
                 class="calculator__button calculator__button_digit" 
-                :key="token"
-                @click="handlePushToken(token)">
-                    {{token}}
+                :key="token.token"
+                @click="handlePushToken(token.token)">
+                    {{token.ui}}
                 </button>
             </div>
             <button 
             v-for="token in operatorTokens" 
             class="calculator__button" 
-            :key="token"
-            @click="handlePushToken(token)">
-                {{token}}
+            :key="token.token"
+            @click="handlePushToken(token.token)">
+                {{token.ui}}
             </button>
         </div>
     </div>
@@ -109,12 +121,19 @@ const handlePushToken = (token: string) => {
     background-color: #4b79be;
     cursor: pointer;
 }
+.calculator__button:active {
+    background-color: #6b99de;
+    cursor: pointer;
+}
 .calculator__button_highlighted {
     background-color: #f2f2f2;
     color: #28528f;
 }
 .calculator__button_highlighted:hover {
     background-color: #d2d2d2;
+}
+.calculator__button_highlighted:active {
+    background-color: #b2b2b2;
 }
 
 .calculator__buttons {

@@ -66,6 +66,18 @@ const operators = [
             a + "/"
         }
     ),
+    new Operator(
+        "mod",
+        1,
+        (a, b) => {
+            return a % b
+        },
+        (a, b) => {
+            return b ? 
+            a + "%" + b :
+            a + "%"
+        }
+    ),
 ] as IOperator[];
 
 export default operators;

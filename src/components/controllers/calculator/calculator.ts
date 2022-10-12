@@ -220,12 +220,28 @@ export default class Calculator {
             } else {
                 if (isDigit(token)) {
                     // Digit
-                    this.currentExpression.appendDigit(token);
+                    if (this.currentExpression.second instanceof Expression) {
+                        this.currentExpression.second.appendDigit(token);
+                    } else {
+                        this.currentExpression.appendDigit(token);
+                    }
                 } else {
                     if (this.currentExpression.second && !this.currentExpression.operator) {
                         throw Error("Current expression has two operands but no operator")
                     }
                     if (isUnaryOperator(token)) {
+                        const applyUnary = (expr: Expression, token: IUnaryOperator) => {
+                            // Applies unary to rightmost element of passed expression
+                            if (typeof expr.second === "string") {
+                                expr.second = new Expression(expr.second, token);
+                            } else if (!expr.second) {
+                                expr.first = new Expression(
+                                    new Expression(expr.first, expr.operator)
+                                );
+                            } else {
+                                applyUnary(expr.second, token);
+                            }
+                        }
                         // strip non-unary dangling operators
                         if (!isUnaryOperator(this.currentExpression.operator) && !this.currentExpression.second) {
                             this.currentExpression.operator = undefined;
@@ -235,9 +251,7 @@ export default class Calculator {
                                 new Expression(this.currentExpression.first, token)
                             );
                         } else {
-                            this.currentExpression.second = new Expression(
-                                new Expression(this.currentExpression.second, token)
-                            );
+                            applyUnary(this.currentExpression, token)
                         }
                     } else if (!this.currentExpression.operator) {
                         this.currentExpression.operator = token;
@@ -245,20 +259,20 @@ export default class Calculator {
                                token.priority > this.currentExpression.operator.priority
                                ) 
                     {
-                        this.currentExpression = new Expression(
-                            this.currentExpression.second,
-                            token
-                        );
-                        this.parsedStack.second = this.currentExpression;
+                        this.currentExpression.second = new Expression(
+                            this.currentExpression.second, token
+                        )
+                        this.parsedStack = this.currentExpression;
                     } else if (this.currentExpression.second && 
                                token.priority <= this.currentExpression.operator.priority
                                ) 
                     {
+                        
                         this.currentExpression = new Expression(
-                            this.parsedStack,
+                            this.currentExpression,
                             token
                         );
-                        this.parsedStack = this.currentExpression;
+                        this.parsedStack = this.currentExpression
                     } else {
                         this.currentExpression.operator = token
                     }
@@ -275,7 +289,7 @@ export default class Calculator {
         0 by default.
         0 if current expression is lacking a second operand.
         Current expression's first operand if no operator.
-        Else second operand.
+        Else second operand's rightmost operand
         */
         if (!this.done && this.currentExpression) {
             if (!this.currentExpression.operator) {

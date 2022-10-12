@@ -25,7 +25,7 @@ class Expression  {
                      "0" + first : 
                      first;
         if (operator) {
-            // explicit if to avoid triggering premature decimal dropping
+            // explicit 'if' to avoid triggering premature decimal dropping
             this.operator = operator;
         }
         this.second = second;
@@ -97,27 +97,46 @@ class Expression  {
 
 
 export default class Calculator {
+    /*
+    Call pushToken() with digit, decimal comma or operator identifier.
+    Call pushToken() with "return" to finalize calculation.
+    getCurrentResult() is intended for fetching the string for UI.
+    If you want the raw resulting number, use calculate().
+    */
     
     stack: (IDigit | IOperator | IUnaryOperator)[]
     parsedStack: null | Expression  // Token stack reduced to expressions with 1-2 operands
     currentExpression: null | Expression  // Expression to append next operator/operand to
+    done: boolean;
     constructor() {
         this.stack = [];
         this.parsedStack = null;
         this.currentExpression = null;
+        this.done = false;
     }
 
     clearAll() {
         this.stack = [];
         this.parsedStack = null;
         this.currentExpression = null;
+        this.done = false;
     }
 
     pushToken(input: string) {
-        const found = [...digits, ...operators, ...unaryOperators].filter(token => token.value === input)[0];
-        if (found) {
-            this.stack.push(found);
-            this.parse();
+        if (input === "return") {
+            this.done = true;
+        } else {
+            const found = [...digits, ...operators, ...unaryOperators].filter(token => token.value === input)[0];
+            if (found) {
+                if (this.done) {
+                    /* 
+                    If "=" was pressed, replace result with new addition
+                    */
+                    this.clearAll()
+                }
+                this.stack.push(found);
+                this.parse();
+            }
         }
     }
 
@@ -131,7 +150,12 @@ export default class Calculator {
 
     stringify() {
         if (this.parsedStack) {
-            return this.parsedStack.toString()
+            if (this.done) {
+                this.parsedStack._dropDanglingDecimal()
+                return this.parsedStack.toString() + "="
+            } else {
+                return this.parsedStack.toString()
+            }
         } else {
             return "0"
         }
@@ -196,5 +220,27 @@ export default class Calculator {
             }
         }
         this.stack = [];
+    }
+
+    getCurrentResult(): string {
+        /* 
+        This would be displayed in the main display of the calculator.
+        0 by default.
+        0 if current expression is lacking a second operand.
+        Current expression's first operand if no operator.
+        Else second operand.
+        */
+        if (!this.done && this.currentExpression) {
+            if (!this.currentExpression.operator) {
+                return this.currentExpression.first.toString()
+            } else if (this.currentExpression.second) {
+                return this.currentExpression.second.toString()
+            } else {
+                return "0"
+            }
+        } else {
+            // To match calculator using commas for decimals.
+            return this.calculate().toString().replace(".", ",")
+        }
     }
 }

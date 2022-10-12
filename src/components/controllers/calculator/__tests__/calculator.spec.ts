@@ -151,6 +151,33 @@ describe('Calculator', function () {
         calculator.pushToken("sub");
         expect(calculator.stringify()).toBe("1-");
     })
+    it("returns correct main display string", function () {
+        expect(calculator.getCurrentResult()).toBe("0");
+        calculator.pushToken("1");
+        expect(calculator.getCurrentResult()).toBe("1");
+        calculator.pushToken("add");
+        expect(calculator.getCurrentResult()).toBe("0");
+        calculator.pushToken("1");
+        calculator.pushToken(",");
+        calculator.pushToken("5");
+        calculator.pushToken("return");
+        expect(calculator.getCurrentResult()).toBe("2,5");
+    })
+    it("returns correct calculation string when done", function () {
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("1");
+        calculator.pushToken("return");
+        expect(calculator.stringify()).toBe("1+1=");
+    })
+    it("replaces result with new input when done", function () {
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("1");
+        calculator.pushToken("return");
+        calculator.pushToken("5");
+        expect(calculator.getCurrentResult()).toBe("5");
+    })
     
 
 });

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Calculator from './controllers/calculator';
+import Calculator from './controllers/calculator/calculator';
 
 // Defines visual representation of buttons
 const digitTokens = [
@@ -28,7 +28,7 @@ const operatorTokens = [
 const calculator = new Calculator();
 
 const handleClear = () => {
-    calculator.clearStack();
+    calculator.clearAll();
 }
 
 const handlePushToken = (token: string) => {

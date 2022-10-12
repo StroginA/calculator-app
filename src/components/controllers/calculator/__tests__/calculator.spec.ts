@@ -168,6 +168,18 @@ describe('Calculator', function () {
         expect(calculator.stringify()).toBe("3+3×√(√(81))");
         expect(calculator.calculate()).toBe(12);
     })
+    it("calculates and stringifies ascending-descending priority order with unaries", function () {
+        calculator.pushToken("1");
+        calculator.pushToken("add");
+        calculator.pushToken("2");
+        calculator.pushToken("mul");
+        calculator.pushToken("4");
+        calculator.pushToken("sqrt");
+        calculator.pushToken("mul");
+        calculator.pushToken("2");
+        expect(calculator.stringify()).toBe("1+2×√(4)×2");
+        expect(calculator.calculate()).toBe(9);
+    })
     it("replaces dangling operators", function () {
         calculator.pushToken("1");
         calculator.pushToken("add");

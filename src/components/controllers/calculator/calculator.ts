@@ -238,7 +238,6 @@ export default class Calculator {
                             this.currentExpression.second = new Expression(
                                 new Expression(this.currentExpression.second, token)
                             );
-                            this.parsedStack.second = this.currentExpression;
                         }
                     } else if (!this.currentExpression.operator) {
                         this.currentExpression.operator = token;

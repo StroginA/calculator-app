@@ -230,10 +230,17 @@ export default class Calculator {
                         if (!isUnaryOperator(this.currentExpression.operator) && !this.currentExpression.second) {
                             this.currentExpression.operator = undefined;
                         }
-                        this.currentExpression = new Expression(
-                            new Expression(this.currentExpression, token)
-                        )
-                        this.parsedStack = this.currentExpression;
+                        if (!this.currentExpression.second) {
+                            this.currentExpression = new Expression(
+                                new Expression(this.currentExpression, token)
+                            );
+                            this.parsedStack = this.currentExpression;
+                        } else {
+                            this.currentExpression = new Expression(
+                                new Expression(this.currentExpression.second, token)
+                            );
+                            this.parsedStack.second = this.currentExpression;
+                        }
                     } else if (!this.currentExpression.operator) {
                         this.currentExpression.operator = token;
                     } else if (this.currentExpression.second && 

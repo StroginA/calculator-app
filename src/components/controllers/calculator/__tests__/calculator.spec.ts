@@ -156,6 +156,18 @@ describe('Calculator', function () {
         expect(calculator.stringify()).toBe("√(√(√(6561)))");
         expect(calculator.calculate()).toBe(3);
     })
+    it("calculates and stringifies complex expression with nested unaries", function () {
+        calculator.pushToken("3");
+        calculator.pushToken("add");
+        calculator.pushToken("3");
+        calculator.pushToken("mul");
+        calculator.pushToken("8");
+        calculator.pushToken("1");
+        calculator.pushToken("sqrt");
+        calculator.pushToken("sqrt");
+        expect(calculator.stringify()).toBe("3+3×√(√(81))");
+        expect(calculator.calculate()).toBe(12);
+    })
     it("replaces dangling operators", function () {
         calculator.pushToken("1");
         calculator.pushToken("add");

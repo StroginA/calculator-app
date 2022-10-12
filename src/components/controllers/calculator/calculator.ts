@@ -231,12 +231,11 @@ export default class Calculator {
                             this.currentExpression.operator = undefined;
                         }
                         if (!this.currentExpression.second) {
-                            this.currentExpression = new Expression(
-                                new Expression(this.currentExpression, token)
+                            this.currentExpression.first = new Expression(
+                                new Expression(this.currentExpression.first, token)
                             );
-                            this.parsedStack = this.currentExpression;
                         } else {
-                            this.currentExpression = new Expression(
+                            this.currentExpression.second = new Expression(
                                 new Expression(this.currentExpression.second, token)
                             );
                             this.parsedStack.second = this.currentExpression;
@@ -244,7 +243,8 @@ export default class Calculator {
                     } else if (!this.currentExpression.operator) {
                         this.currentExpression.operator = token;
                     } else if (this.currentExpression.second && 
-                               token.priority > this.currentExpression.operator.priority) 
+                               token.priority > this.currentExpression.operator.priority
+                               ) 
                     {
                         this.currentExpression = new Expression(
                             this.currentExpression.second,
@@ -252,8 +252,9 @@ export default class Calculator {
                         );
                         this.parsedStack.second = this.currentExpression;
                     } else if (this.currentExpression.second && 
-                        token.priority <= this.currentExpression.operator.priority
-                    ) {
+                               token.priority <= this.currentExpression.operator.priority
+                               ) 
+                    {
                         this.currentExpression = new Expression(
                             this.parsedStack,
                             token

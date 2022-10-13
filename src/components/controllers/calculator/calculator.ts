@@ -143,6 +143,8 @@ export default class Calculator {
     pushToken(input: string) {
         if (input === "return") {
             this.done = true;
+        } else if (input === "clear") {
+            this.clearAll();
         } else {
             const found = [...digits, ...operators, ...unaryOperators].filter(token => token.value === input)[0];
             if (found) {

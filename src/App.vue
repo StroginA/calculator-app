@@ -31,17 +31,18 @@ import CalculatorView from "./components/CalculatorView.vue";
     margin: 2rem 1.5rem;
     border-radius: 1rem;
     height: fit-content;
-    max-width: 20rem;
+    min-width: 20rem;
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.5);
   }
 
   @media screen and (max-width: 768px) {
     .app__wrapper, .app__calculator {
       margin: 0;
       border-radius: 0;
-      width: 100%;
     }
     .app__calculator {
       min-height: 100vh;
+      min-width: 100vw;
     }
   }
 </style>

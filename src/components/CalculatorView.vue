@@ -1,6 +1,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import Calculator from './controllers/calculator/calculator';
+import parseHotkey from './controllers/parseHotkey';
 
 export default Vue.extend({
     data() {
@@ -19,7 +20,7 @@ export default Vue.extend({
                 { ui: "0", token: "0" },
                 { ui: ",", token: "," },
             ],
-                operatorTokens: [
+            operatorTokens: [
                 { ui: "√", token: "sqrt" },
                 { ui: "%", token: "mod" },
                 { ui: "/", token: "div" },
@@ -27,13 +28,15 @@ export default Vue.extend({
                 { ui: "-", token: "sub" },
                 { ui: "+", token: "add" },
             ],
+            buttonCount: 20,
+            /*
+            Used to calculate grid size. Adjust as needed when adding 
+            new elements. Adjusting CSS elsewhere to make it fit may be required.
+            */
             calculator: new Calculator(),
         }
     },
     methods: {
-        handleClear() {
-            this.calculator.clearAll();
-        },
         handlePushToken(token: string) {
             // special cases go first
             if (token === "double-zero") {
@@ -45,57 +48,31 @@ export default Vue.extend({
         },
         handleKeypress(e: KeyboardEvent) {
             e.preventDefault();  // To avoid Enter inputting the number
-            switch (e.key) {
-                case "Enter":
-                    this.handlePushToken("return");
-                    break;
-                case "=":
-                    this.handlePushToken("return");
-                    break;
-                case "Escape":
-                    this.calculator.clearAll();
-                    break;
-                case "Clear":
-                    this.calculator.clearAll();
-                    break;
-                case "Add":
-                    this.handlePushToken("add");
-                    break;
-                case "Subtract":
-                    this.handlePushToken("sub");
-                    break;
-                case "Multiply":
-                    this.handlePushToken("mul");
-                    break;
-                case "Divide":
-                    this.handlePushToken("div");
-                    break;
-                case "Decimal":
-                    this.handlePushToken(",");
-                    break;
-                case "%":
-                    this.handlePushToken("mod");
-                    break;
-                default:
-                    this.handlePushToken(e.key);
-            }
+            this.handlePushToken(parseHotkey(e.key));
         }
+    },
+    mounted() {
+        const container = this.$el as HTMLElement;
+        container.focus();
     }
 });
 </script>
 
 <template>
     <div class="calculator"
+    tabindex="-1"
     v-on:keydown="handleKeypress">
         <div class="calculator__expression">{{calculator.stringify()}}</div>
         <div class="calculator__result">{{calculator.getCurrentResult()}}</div>
-        <div class="calculator__buttons">
+        <div class="calculator__buttons"
+        :style="{'grid-template-columns': `repeat(${Math.floor(Math.sqrt(buttonCount))}, 1fr)`, 
+        'grid-template-rows': `repeat(${Math.ceil(Math.sqrt(buttonCount))}, 1fr)`}">
             <!--
                 Buttons that do not modify the expression but instead
                 are utility (clear, calculate, change mode) are declared
                 out of the for loop
             -->
-            <button class="calculator__button" @click="handleClear">C</button>
+            <button class="calculator__button" @click="handlePushToken('clear')">C</button>
             <button class="calculator__button calculator__button_highlighted calculator__equals"
             @click="handlePushToken('return')">=</button>
             <div class="calculator__digits">
@@ -122,16 +99,18 @@ export default Vue.extend({
 .calculator {
     background: linear-gradient(#28528f, #3976cf);
     padding: 1rem;
+    padding-top: 3rem;
     color: #f2f2f2;
     display: flex;
     flex-direction: column;
+    font-family: 'MS Shell Dlg 2';
 }
 
 .calculator__expression {
     margin-top: auto;
     text-align: end;
-    font-size: 1.4rem;
-    min-height: 1.4rem;
+    font-size: 1.3rem;
+    min-height: 1.3rem;
     font-weight: 400;
     margin-bottom: 0.5rem;
     word-break: break-all;
@@ -156,6 +135,7 @@ export default Vue.extend({
     width: 3rem;
     text-align: center;
     vertical-align: middle;
+    justify-self: center;
     border: 0;
     padding: 0;
     border-radius: 9999px;
@@ -181,9 +161,9 @@ export default Vue.extend({
 
 .calculator__buttons {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(5, 1fr);
-    gap: 1rem;
+    row-gap: 1rem;
+    column-gap: 1.5rem;
+    grid-auto-flow: dense;
 }
 
 .calculator__digits {
@@ -191,8 +171,8 @@ export default Vue.extend({
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(4, 1fr);
-    gap: 1rem;
-    
+    row-gap: 1rem;
+    column-gap: 1.5rem;
 }
 
 .calculator__equals {

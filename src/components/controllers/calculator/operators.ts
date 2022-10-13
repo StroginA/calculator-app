@@ -1,11 +1,9 @@
-import type { IOperator } from "./types";
-
-class Operator implements IOperator {
+class Operator {
     value: string;
     type: 'operator';
-    priority: number;
+    priority: number; // 0 for "+ -" , 1 for "x /"
     apply: (a: number, b: number) => number;
-    appendToString: (a: string, b?: string) => string;
+    appendToString: (a: string, b?: string) => string; // String representation of operator and its operands
     constructor(
         value: string, 
         priority: number, 
@@ -80,4 +78,4 @@ const operators = [
     ),
 ] as Operator[];
 
-export default operators;
+export {operators, Operator};

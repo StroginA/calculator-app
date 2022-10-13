@@ -1,24 +1,23 @@
-import { isDigit, isOperator, isUnaryOperator, type IDigit, type IOperator, type IUnaryOperator } from "./types";
-import digits from "./digits";
-import operators from "./operators";
-import unaryOperators from "./unaryOperators";
+import {digits, Digit} from "./digits";
+import {operators, Operator} from "./operators";
+import {unaryOperators, UnaryOperator} from "./unaryOperators";
 
 
 class Expression  {
     first: string | Expression;
     second?: string | Expression;
-    _operator?: IOperator | IUnaryOperator;
+    _operator?: Operator | UnaryOperator;
 
-    set operator(operator: IOperator | IUnaryOperator | undefined) {
+    set operator(operator: Operator | UnaryOperator | undefined) {
         this._dropDanglingDecimal();
         this._operator = operator;
     }
 
-    get operator(): IOperator | IUnaryOperator | undefined {
+    get operator(): Operator | UnaryOperator | undefined {
         return this._operator
     }
 
-    constructor(first: string | Expression, operator?: IOperator | IUnaryOperator, 
+    constructor(first: string | Expression, operator?: Operator | UnaryOperator, 
                 second?: string | Expression) {
         // Preappend 0 if there is no number before ","
         this.first = this._preappendZero(undefined, first)
@@ -40,19 +39,19 @@ class Expression  {
         )
     }
 
-    appendDigit(digit: IDigit) {
-        if (isOperator(this.operator) && typeof this.second === 'string') {
+    appendDigit(digit: Digit) {
+        if (this.operator instanceof Operator && typeof this.second === 'string') {
             // do not add a second decimal
             this.second = digit.value === "," && this.second.includes(",") ?
                           this.second :
                           this.second + digit.value;
-        } else if (isOperator(this.operator)) {
+        } else if (this.operator instanceof Operator) {
             // If there is an Expression second operand (such as square root of a number), replace it
             // Preappend 0 if there is no number before ","
             this.second = this._preappendZero(undefined, digit.value);
         } else {
             // do not add a decimal if there is one or first member is expression
-            if (isUnaryOperator(this.operator)) {
+            if (this.operator instanceof Operator) {
                 this.operator = undefined;
                 this.first = this._preappendZero(undefined, digit.value)
             } else {
@@ -93,19 +92,19 @@ class Expression  {
                 return expression.resolve();
             }
         }
-        if (isOperator(this.operator) && this.second) {
+        if (this.operator instanceof Operator && this.second) {
             return this.operator.apply(toFloat(this.first), toFloat(this.second))
-        } else if (isUnaryOperator(this.operator)) {
+        } else if (this.operator instanceof UnaryOperator) {
             return this.operator.apply(toFloat(this.first))
         } else return toFloat(this.first);
     }
 
     toString(): string {
-        if (isOperator(this.operator) && this.second) {
+        if (this.operator instanceof Operator && this.second) {
             return this.operator.appendToString(this.first.toString(), this.second.toString())
-        } else if (isOperator(this.operator)) {
+        } else if (this.operator instanceof Operator) {
             return this.operator.appendToString(this.first.toString())
-        } else if (isUnaryOperator(this.operator)) {
+        } else if (this.operator instanceof UnaryOperator) {
             return this.operator.appendToString(this.first.toString())
         } else return this.first.toString();
     }
@@ -122,7 +121,7 @@ export default class Calculator {
     If you want the raw resulting number, use calculate().
     */
     
-    stack: (IDigit | IOperator | IUnaryOperator)[]
+    stack: (Digit | Operator | UnaryOperator)[]
     parsedStack: null | Expression  // Token stack reduced to expressions with 1-2 operands
     currentExpression: null | Expression  // Expression to append next operator/operand to
     done: boolean;
@@ -174,7 +173,7 @@ export default class Calculator {
                 this.parsedStack._dropDanglingDecimal()
                 // strip dangling operator
                 if (this.currentExpression && 
-                    !isUnaryOperator(this.currentExpression.operator) && 
+                    !(this.currentExpression.operator instanceof UnaryOperator) && 
                     !this.currentExpression.second
                 ) {
                     this.currentExpression.operator = undefined
@@ -210,7 +209,7 @@ export default class Calculator {
         for (const token of this.stack) {
             // Initialise expression if missing
             if (!this.parsedStack) {
-                if (isDigit(token)) {
+                if (token instanceof Digit) {
                     this.currentExpression = new Expression(token.value);
                     this.parsedStack = this.currentExpression;
                 } else {
@@ -220,7 +219,7 @@ export default class Calculator {
             } else if (!this.currentExpression) {
                 throw Error("Missing reference to current expression");
             } else {
-                if (isDigit(token)) {
+                if (token instanceof Digit) {
                     // Digit
                     if (this.currentExpression.second instanceof Expression) {
                         this.currentExpression.second.appendDigit(token);
@@ -231,8 +230,8 @@ export default class Calculator {
                     if (this.currentExpression.second && !this.currentExpression.operator) {
                         throw Error("Current expression has two operands but no operator")
                     }
-                    if (isUnaryOperator(token)) {
-                        const applyUnary = (expr: Expression, token: IUnaryOperator) => {
+                    if (token instanceof UnaryOperator) {
+                        const applyUnary = (expr: Expression, token: UnaryOperator) => {
                             // Applies unary to rightmost element of passed expression
                             if (typeof expr.second === "string") {
                                 expr.second = new Expression(expr.second, token);
@@ -243,7 +242,7 @@ export default class Calculator {
                             }
                         }
                         // strip non-unary dangling operators
-                        if (!isUnaryOperator(this.currentExpression.operator) && !this.currentExpression.second) {
+                        if (!(this.currentExpression.operator instanceof UnaryOperator) && !this.currentExpression.second) {
                             this.currentExpression.operator = undefined;
                         }
                         if (!this.currentExpression.second) {
@@ -291,7 +290,7 @@ export default class Calculator {
         const getRightmostOperand = (expr: string | Expression): string => {
             if (typeof expr === "string") {
                 return expr;
-            } else if (isUnaryOperator(expr.operator)) {
+            } else if ((expr.operator instanceof UnaryOperator)) {
                 return expr.toString()
             } else if (!expr.operator || !expr.second) {
                 return getRightmostOperand(expr.first)

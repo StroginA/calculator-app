@@ -3,6 +3,21 @@ import Vue from 'vue';
 import Calculator from './controllers/calculator/calculator';
 import parseHotkey from './controllers/parseHotkey';
 
+/*
+Main calculator view.
+
+digitTokens define digits and associated symbols.
+{
+    ui: string to represent digit in UI,
+    token: symbol passed to calculator when button is pressed
+}
+This ideally stays intact.
+
+operatorTokens define various operators.
+This list can be expanded, and the grid along with it, as long as
+buttonCount is also modified accordingly.
+*/
+
 export default Vue.extend({
     data() {
         return {
@@ -67,6 +82,9 @@ export default Vue.extend({
         <div class="calculator__buttons"
         :style="{'grid-template-columns': `repeat(${Math.floor(Math.sqrt(buttonCount))}, 1fr)`, 
         'grid-template-rows': `repeat(${Math.ceil(Math.sqrt(buttonCount))}, 1fr)`}">
+            <!--
+                v-bind:style defines a rectangular grid that fits [buttonCount] buttons.
+            -->
             <!--
                 Buttons that do not modify the expression but instead
                 are utility (clear, calculate, change mode) are declared

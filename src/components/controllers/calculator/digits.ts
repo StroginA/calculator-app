@@ -1,5 +1,4 @@
-import type { IDigit } from "./types"
-class Digit implements IDigit {
+class Digit {
     value: string;
     type: 'digit';
     constructor(value: string) {
@@ -19,6 +18,6 @@ const digits = [
     new Digit("8"),
     new Digit("9"),
     new Digit(","),
-] as IDigit[];
+] as Digit[];
 
-export default digits;
+export {digits, Digit};

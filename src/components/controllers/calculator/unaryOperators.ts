@@ -1,11 +1,9 @@
-import type { IUnaryOperator } from "./types";
-
-class UnaryOperator implements IUnaryOperator {
+class UnaryOperator {
     value: string;
     type: 'unaryOperator';
-    priority: number;
+    priority: number; // 2 for unary operators
     apply: (operand: number) => number;
-    appendToString: (operand: string) => string;
+    appendToString: (operand: string) => string; // String representation of operator and its operands
     constructor(
         value: string, 
         priority: number, 
@@ -30,7 +28,7 @@ const unaryOperators = [
             return "√(" + operand + ")"
         }
     )
-] as IUnaryOperator[];
+] as UnaryOperator[];
 
 
-export default unaryOperators;
+export {unaryOperators, UnaryOperator};
